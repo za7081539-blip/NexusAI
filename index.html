@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusAI</title>
+    <link rel="shortcut icon" href="download.jfif" type="image/x-icon">
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Prism -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+
+  <!-- Marked -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+  <style>
+    body {
+      background: radial-gradient(circle at top left, #111827, #020617 60%);
+      overflow-x: hidden;
+    }
+
+    .glass {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .neon {
+      box-shadow: 0 0 20px rgba(34,211,238,0.3), 0 0 40px rgba(168,85,247,0.2);
+    }
+
+    .scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .scrollbar::-webkit-scrollbar-thumb {
+      background: #8b5cf6;
+      border-radius: 999px;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .loader {
+      width: 22px;
+      height: 22px;
+      border: 3px solid rgba(255,255,255,0.2);
+      border-top: 3px solid cyan;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .tool-section {
+      display: none;
+    }
+
+    .tool-section.active {
+      display: block;
+    }
+  </style>
+</head>
+<body class="text-white min-h-screen">
+
+  <!-- Sidebar -->
+  <div class="fixed top-0 left-0 h-full w-72 glass border-r border-white/10 p-6 hidden md:block">
+
+    <h1 class="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 text-transparent bg-clip-text mb-10">
+      NexusAI Website
+    </h1>
+
+    <div class="space-y-4">
+
+      <button onclick="showTool('chat')" class="w-full glass hover:bg-cyan-500/10 p-4 rounded-2xl text-left transition">
+        <i class="fa-solid fa-robot mr-3 text-cyan-400"></i>
+        AI Chat
+      </button>
+
+      <button onclick="showTool('image')" class="w-full glass hover:bg-purple-500/10 p-4 rounded-2xl text-left transition">
+        <i class="fa-solid fa-image mr-3 text-purple-400"></i>
+        Image Generator
+      </button>
+
+      <button onclick="showTool('writer')" class="w-full glass hover:bg-cyan-500/10 p-4 rounded-2xl text-left transition">
+        <i class="fa-solid fa-pen-nib mr-3 text-cyan-400"></i>
+        Content Writer
+      </button>
+
+      <button onclick="showTool('code')" class="w-full glass hover:bg-purple-500/10 p-4 rounded-2xl text-left transition">
+        <i class="fa-solid fa-code mr-3 text-purple-400"></i>
+        Code Generator
+      </button>
+
+      <button onclick="showTool('music')" class="w-full glass hover:bg-cyan-500/10 p-4 rounded-2xl text-left transition">
+        <i class="fa-solid fa-music mr-3 text-cyan-400"></i>
+        AI Music
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- Main -->
+  <div class="md:ml-72 min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="glass sticky top-0 z-50 p-4 flex justify-between items-center border-b border-white/10">
+
+      <div>
+        <h2 class="text-xl font-semibold">Futuristic AI Workspace</h2>
+      </div>
+
+      <div class="flex items-center gap-3">
+
+        <button onclick="openSettings()"
+        class="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 neon hover:scale-105 transition">
+          <i class="fa-solid fa-gear"></i>
+          Settings
+        </button>
+
+      </div>
+
+    </nav>
+
+    <div class="p-6">
+
+      <!-- CHAT -->
+      <section id="chat" class="tool-section active fade-in">
+
+        <div class="glass rounded-3xl p-6 neon">
+
+          <div class="flex justify-between items-center mb-5">
+            <h2 class="text-3xl font-bold">💬 AI Chat Assistant</h2>
+            <button onclick="clearChat()" class="text-red-400">Clear Chat</button>
+          </div>
+
+          <div id="chatMessages"
+          class="h-[450px] overflow-y-auto scrollbar space-y-4 mb-5 p-4 rounded-2xl bg-black/20">
+          </div>
+
+          <div class="flex gap-3">
+            <textarea id="chatInput"
+            placeholder="Ask anything..."
+            class="flex-1 bg-slate-900 border border-white/10 rounded-2xl p-4 outline-none resize-none"></textarea>
+
+            <button onclick="sendChat()"
+            class="px-6 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-500 neon hover:scale-105 transition">
+              Send
+            </button>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- IMAGE -->
+      <section id="image" class="tool-section fade-in">
+
+        <div class="glass rounded-3xl p-6 neon">
+
+          <h2 class="text-3xl font-bold mb-5">🎨 AI Image Generator</h2>
+
+          <div class="flex gap-3 mb-5">
+            <input type="text" id="imagePrompt"
+            placeholder="cat in space"
+            class="flex-1 bg-slate-900 border border-white/10 rounded-2xl p-4 outline-none">
+
+            <button onclick="generateImage()"
+            class="px-6 rounded-2xl bg-gradient-to-r from-purple-500 to-cyan-500 neon hover:scale-105 transition">
+              Generate
+            </button>
+          </div>
+
+          <div id="imageLoader" class="hidden justify-center py-10">
+            <div class="loader"></div>
+          </div>
+
+          <div id="imageResult" class="grid md:grid-cols-2 gap-6"></div>
+
+        </div>
+
+      </section>
+
+      <!-- WRITER -->
+      <section id="writer" class="tool-section fade-in">
+
+        <div class="glass rounded-3xl p-6 neon">
+
+          <h2 class="text-3xl font-bold mb-5">✍️ AI Content Writer</h2>
+
+          <textarea id="writerInput"
+          placeholder="Write essay about cricket"
+          class="w-full h-40 bg-slate-900 border border-white/10 rounded-2xl p-4 outline-none mb-4"></textarea>
+
+          <button onclick="generateContent()"
+          class="px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-500 neon hover:scale-105 transition mb-6">
+            Generate Content
+          </button>
+
+          <div id="writerOutput"
+          class="glass p-5 rounded-2xl prose prose-invert max-w-none"></div>
+
+        </div>
+
+      </section>
+
+      <!-- CODE -->
+      <section id="code" class="tool-section fade-in">
+
+        <div class="glass rounded-3xl p-6 neon">
+
+          <h2 class="text-3xl font-bold mb-5">💻 AI Code Generator</h2>
+
+          <textarea id="codePrompt"
+          placeholder="Create responsive navbar"
+          class="w-full h-40 bg-slate-900 border border-white/10 rounded-2xl p-4 outline-none mb-4"></textarea>
+
+          <button onclick="generateCode()"
+          class="px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-cyan-500 neon hover:scale-105 transition mb-6">
+            Generate Code
+          </button>
+
+          <pre class="rounded-2xl overflow-auto">
+<code id="codeOutput" class="language-html"></code>
+          </pre>
+
+        </div>
+
+      </section>
+
+      <!-- MUSIC -->
+      <section id="music" class="tool-section fade-in">
+
+        <div class="glass rounded-3xl p-6 neon">
+
+          <h2 class="text-3xl font-bold mb-5">🎵 AI Music Player</h2>
+
+          <div class="grid md:grid-cols-2 gap-6">
+
+            <div class="glass p-5 rounded-2xl">
+              <img src="https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1200&auto=format&fit=crop"
+              class="rounded-2xl mb-4 h-56 w-full object-cover">
+
+              <h3 class="text-xl font-bold mb-2">Cyber Dreams</h3>
+              <p class="text-gray-300 mb-4">Futuristic electronic vibes.</p>
+
+              <audio controls class="w-full">
+                <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+              </audio>
+            </div>
+
+            <div class="glass p-5 rounded-2xl">
+              <h3 class="text-2xl font-bold mb-4">Future AI Music</h3>
+
+              <p class="text-gray-300 leading-8">
+                Future Integration Placeholder:
+                <br><br>
+                • Suno AI API
+                <br>
+                • Udio AI API
+                <br>
+                • AI Generated Music
+                <br>
+                • Voice Cloning
+                <br>
+                • AI Lyrics Generator
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal"
+  class="fixed inset-0 bg-black/70 hidden justify-center items-center z-50 p-4">
+
+    <div class="glass w-full max-w-xl rounded-3xl p-8 neon">
+
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold">⚙️ API Settings</h2>
+
+        <button onclick="closeSettings()" class="text-2xl">×</button>
+      </div>
+
+      <label class="block mb-3 text-gray-300">Select Provider</label>
+
+      <select id="provider"
+      class="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 mb-6 outline-none">
+
+        <option value="groq">Groq API</option>
+        <option value="openai">OpenAI API</option>
+
+      </select>
+
+      <label class="block mb-3 text-gray-300">API Key</label>
+
+      <input type="password"
+      id="apiKey"
+      placeholder="Paste your API key"
+      class="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 mb-6 outline-none">
+
+      <button onclick="saveSettings()"
+      class="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-500 neon hover:scale-105 transition">
+        Save Settings
+      </button>
+
+    </div>
+
+  </div>
+
+<script>
+
+  // ==========================================
+  // LOCAL STORAGE SETTINGS
+  // ==========================================
+
+  const savedProvider = localStorage.getItem('nexus_provider');
+  const savedApiKey = localStorage.getItem('nexus_api_key');
+
+  if(savedProvider){
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('provider').value = savedProvider;
+    });
+  }
+
+  if(savedApiKey){
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('apiKey').value = savedApiKey;
+    });
+  }
+
+  // ==========================================
+  // UI FUNCTIONS
+  // ==========================================
+
+  function showTool(id){
+
+    document.querySelectorAll('.tool-section')
+    .forEach(section => section.classList.remove('active'));
+
+    document.getElementById(id)
+    .classList.add('active');
+
+  }
+
+  function openSettings(){
+    document.getElementById('settingsModal')
+    .classList.remove('hidden');
+
+    document.getElementById('settingsModal')
+    .classList.add('flex');
+  }
+
+  function closeSettings(){
+    document.getElementById('settingsModal')
+    .classList.add('hidden');
+  }
+
+  function saveSettings(){
+
+    const provider = document.getElementById('provider').value;
+    const key = document.getElementById('apiKey').value;
+
+    localStorage.setItem('nexus_provider', provider);
+    localStorage.setItem('nexus_api_key', key);
+
+    alert('Settings saved successfully!');
+
+    closeSettings();
+  }
+
+  // ==========================================
+  // API HELPER
+  // ==========================================
+
+  async function callAI(messages){
+
+    const provider = localStorage.getItem('nexus_provider') || 'groq';
+    const apiKey = localStorage.getItem('nexus_api_key');
+
+    if(!apiKey){
+      throw new Error('Please add your API key in settings.');
+    }
+
+    let url = '';
+    let model = '';
+
+    if(provider === 'groq'){
+      url = 'https://api.groq.com/openai/v1/chat/completions';
+      model = 'llama-3.3-70b-versatile';
+    }
+    else{
+      url = 'https://api.openai.com/v1/chat/completions';
+      model = 'gpt-4o-mini';
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: 0.7
+      })
+    });
+
+    if(response.status === 429){
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+
+    if(!response.ok){
+      const error = await response.text();
+      throw new Error(error);
+    }
+
+    const data = await response.json();
+
+    return data.choices[0].message.content;
+  }
+
+  // ==========================================
+  // CHAT SYSTEM
+  // ==========================================
+
+  const chatMessages = document.getElementById('chatMessages');
+
+  function addMessage(role, content){
+
+    const div = document.createElement('div');
+
+    div.className = role === 'user'
+    ? 'bg-cyan-500/10 border border-cyan-400/20 p-4 rounded-2xl ml-auto max-w-[80%]'
+    : 'bg-purple-500/10 border border-purple-400/20 p-4 rounded-2xl max-w-[80%]';
+
+    div.innerHTML = marked.parse(content);
+
+    chatMessages.appendChild(div);
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    saveChatHistory();
+  }
+
+  function saveChatHistory(){
+    localStorage.setItem('nexus_chat_history', chatMessages.innerHTML);
+  }
+
+  function loadChatHistory(){
+    const history = localStorage.getItem('nexus_chat_history');
+
+    if(history){
+      chatMessages.innerHTML = history;
+    }
+  }
+
+  function clearChat(){
+    chatMessages.innerHTML = '';
+    localStorage.removeItem('nexus_chat_history');
+  }
+
+  loadChatHistory();
+
+  async function sendChat(){
+
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+
+    if(!message) return;
+
+    addMessage('user', message);
+
+    input.value = '';
+
+    const loader = document.createElement('div');
+    loader.className = 'flex gap-3 items-center text-gray-300';
+    loader.innerHTML = '<div class="loader"></div> AI is thinking...';
+
+    chatMessages.appendChild(loader);
+
+    try{
+
+      const reply = await callAI([
+        {
+          role: 'system',
+          content: 'You are NexusAI, a futuristic AI assistant.'
+        },
+        {
+          role: 'user',
+          content: message
+        }
+      ]);
+
+      loader.remove();
+
+      addMessage('assistant', reply);
+
+      Prism.highlightAll();
+
+    }
+    catch(error){
+
+      loader.remove();
+
+      addMessage('assistant', '❌ Error: ' + error.message);
+    }
+
+  }
+
+  // ==========================================
+  // CONTENT WRITER
+  // ==========================================
+
+  async function generateContent(){
+
+    const input = document.getElementById('writerInput').value;
+    const output = document.getElementById('writerOutput');
+
+    output.innerHTML = '<div class="flex items-center gap-3"><div class="loader"></div> Generating content...</div>';
+
+    try{
+
+      const result = await callAI([
+        {
+          role: 'system',
+          content: 'You are a professional AI content writer. Write engaging blogs, essays, captions and articles with proper formatting.'
+        },
+        {
+          role: 'user',
+          content: input
+        }
+      ]);
+
+      output.innerHTML = marked.parse(result);
+
+    }
+    catch(error){
+      output.innerHTML = '❌ ' + error.message;
+    }
+
+  }
+
+  // ==========================================
+  // CODE GENERATOR
+  // ==========================================
+
+  async function generateCode(){
+
+    const prompt = document.getElementById('codePrompt').value;
+    const output = document.getElementById('codeOutput');
+
+    output.textContent = 'Generating code...';
+
+    try{
+
+      const result = await callAI([
+        {
+          role: 'system',
+          content: 'You are an expert frontend developer. Generate clean HTML, CSS and JavaScript code only. No explanation.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ]);
+
+      output.textContent = result;
+
+      Prism.highlightAll();
+
+    }
+    catch(error){
+      output.textContent = '❌ ' + error.message;
+    }
+
+  }
+
+  // ==========================================
+  // IMAGE GENERATOR
+  // ==========================================
+
+async function generateImage(){
+
+  const prompt =
+  document.getElementById("imagePrompt").value;
+
+  const resultDiv =
+  document.getElementById("imageResult");
+
+  const loader =
+  document.getElementById("imageLoader");
+
+  if(!prompt){
+    alert("Please enter prompt");
+    return;
+  }
+
+  loader.classList.remove("hidden");
+  loader.classList.add("flex");
+
+  resultDiv.innerHTML = "";
+
+  try{
+
+    // REAL AI IMAGE URL
+    const imageUrl =
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+
+    // WAIT LITTLE FOR SMOOTH UX
+    setTimeout(()=>{
+
+      resultDiv.innerHTML = `
+
+      <div class="glass p-4 rounded-3xl fade-in">
+
+        <img
+        src="${imageUrl}"
+        class="rounded-2xl mb-4 w-full"
+        alt="AI Image">
+
+        <p class="mb-4 text-gray-300">
+          Prompt: ${prompt}
+        </p>
+
+        <a
+        href="${imageUrl}"
+        download="ai-image.png"
+        target="_blank"
+        class="block text-center py-3 rounded-2xl
+        bg-gradient-to-r from-cyan-500 to-purple-500 neon">
+
+          Download Image
+
+        </a>
+
+      </div>
+
+      `;
+
+      loader.classList.add("hidden");
+
+    },1500);
+
+  }
+
+  catch(error){
+
+    loader.classList.add("hidden");
+
+    resultDiv.innerHTML = `
+      <div class="text-red-400">
+        Error generating image
+      </div>
+    `;
+
+  }
+
+}
+
+</script>
+
+</body>
+</html>
